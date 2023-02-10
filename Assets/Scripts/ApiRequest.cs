@@ -3,17 +3,24 @@ using System.Collections.Generic;
 using UnityEngine;
 using PokeApiNet;
 using RSG;
-using System.Text;
 using UnityEngine.Networking;
 using System.Net;
 using System;
-using UnityEngine.UI;
 public class ApiRequest : MonoBehaviour
 {
-    PokeApiClient pokeClient = new PokeApiClient();
-    [SerializeField] RawImage rawImage;
+    public static ApiRequest instance;
+    PokeApiClient pokeClient;
+    //[SerializeField] RawImage rawImage;
 
-    async public void GetNewPokemon()
+    private void Start()
+    {
+        instance = this;
+        if (FindObjectsOfType<ApiRequest>().Length > 1)
+            Destroy(gameObject);
+        pokeClient = new PokeApiClient();
+    }
+
+    async public void GetNewPokemon(PokemonData pokemonData)
     {
         int rng = UnityEngine.Random.Range(1, 100);
         Pokemon pokemon = await pokeClient.GetResourceAsync<Pokemon>(rng);
@@ -21,24 +28,20 @@ public class ApiRequest : MonoBehaviour
         a[0] = char.ToUpper(a[0]);
         string s = new string(a);
 
-
-        var pokeSprite = pokemon.Sprites.FrontDefault;
+        pokemonData.name = s;
+        pokemonData.spriteUrl = pokemon.Sprites.FrontDefault;
         /*GetSprite(pokeSprite).Then(texture => rawImage.texture);*/
-        StartCoroutine(NewPokemon(pokeSprite,s));
-
+        StartCoroutine(NewPokemon(pokemonData));
     }
 
-    private IEnumerator NewPokemon(string url,string pokeName)
+    private IEnumerator NewPokemon(PokemonData pokemonData)
     {
-        var spriteRequest = UnityWebRequestTexture.GetTexture(url);
+        var spriteRequest = UnityWebRequestTexture.GetTexture(pokemonData.spriteUrl);
         yield return spriteRequest.SendWebRequest();
         var texture = DownloadHandlerTexture.GetContent(spriteRequest);
         texture.filterMode = FilterMode.Point;
-        PokemonData pokemonData = new PokemonData();
-        pokemonData.name = pokeName;
-        pokemonData.spriteUrl = url;
         pokemonData.texture = texture;
-        BagUI.instance.AddPokemon(texture, pokeName, pokemonData); //save texture locally
+        //BagUI.instance.AddPokemon(pokemonData); //save texture locally
     }
 
     /*private IPromise<Texture2D> GetSprite(string pokeSprite)

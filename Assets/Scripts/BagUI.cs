@@ -6,12 +6,13 @@ using UnityEngine.UI;
 
 public class BagUI : MonoBehaviour
 {
-    [SerializeField] GameObject pokemonPrefab, bagObject, smallBagObject;
+    [SerializeField] GameObject pokemonPrefab, bagObject, smallBagObject, selector;
     public List<GameObject> pokemonInBag = new List<GameObject>();
     public List<PokemonData> pokemonData = new List<PokemonData>();
     [SerializeField] Transform placement, bagPlacement;
     public static BagUI instance;
-    public GameObject newPokemon;
+    GameObject newPokemon;
+
 
     private void Start()
     {
@@ -23,9 +24,10 @@ public class BagUI : MonoBehaviour
         {
             HideSmallBag();
         }
+        selector.SetActive(true);
     }
 
-    public void AddPokemon(Texture2D pokeImage,string pokeName, PokemonData newPokemonData)
+    public void AddPokemon(PokemonData newPokemonData)
     {
         HideSmallBag();
 
@@ -38,7 +40,7 @@ public class BagUI : MonoBehaviour
         pokeScript.pokemonData.texture = newPokemonData.texture;
         pokemonData.Add(newPokemonData);
 
-        pokeScript.SetImageAndName(pokeImage, pokeName);
+        pokeScript.SetImageAndName(newPokemonData.texture, newPokemonData.name);
         
         newPokemon = pokeObject;
         if(pokemonInBag.Count < 3)
@@ -46,7 +48,7 @@ public class BagUI : MonoBehaviour
             pokemonInBag.Add(pokeObject);
             pokemonData.Add(newPokemonData);
             pokeScript.inBag = true;
-            pokeObject.transform.parent = bagPlacement;
+            pokeObject.transform.SetParent(bagPlacement);
             pokeObject.SetActive(true);
             newPokemon = null;
             EnableSmallBag();
@@ -59,14 +61,12 @@ public class BagUI : MonoBehaviour
         }
     }
 
-    public void AddNewCard(PokemonData newPokemonData)
+    public void AddNewPokemon(PokemonData newPokemonData)
     {
         pokemonInBag.Add(newPokemon);
         pokemonData.Add(newPokemonData);
-        newPokemon.transform.parent = bagPlacement;
+        newPokemon.transform.SetParent(bagPlacement);
         transform.GetChild(0).gameObject.SetActive(false);
-
-
         EnableSmallBag();
     }
 
@@ -90,9 +90,9 @@ public class BagUI : MonoBehaviour
 
     private void EnableSmallBag()
     {
+        selector.SetActive(true);
         for (int i = 0; i < pokemonInBag.Count; i++)
         {
-            print(i);
             var pokemon = smallBagObject.transform.GetChild(i);
             pokemon.gameObject.SetActive(false);
             var pokemonScript = pokemonInBag[i].GetComponent<PokemonScript>();
@@ -100,12 +100,13 @@ public class BagUI : MonoBehaviour
             pokemon.GetComponentInChildren<RawImage>().texture = pokemonScript.pokemonData.texture;
             pokemon.gameObject.SetActive(true);
         }
-        smallBagObject.SetActive(true);
+        smallBagObject.transform.parent.gameObject.SetActive(true);
     }
 
     private void HideSmallBag()
     {
-        smallBagObject.SetActive(false);
+        selector.SetActive(false);
+        smallBagObject.transform.parent.gameObject.SetActive(false);
         for (int i = 0; i < smallBagObject.transform.childCount; i++)
         {
             smallBagObject.transform.GetChild(i).gameObject.SetActive(false);

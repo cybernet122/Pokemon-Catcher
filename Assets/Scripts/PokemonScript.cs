@@ -28,7 +28,7 @@ public class PokemonScript : MonoBehaviour
 
     public void DiscardCard()
     {
-        if(inBag)
+        if (inBag)
             BagUI.instance.RemoveCard(gameObject, pokemonData);
     }
 
@@ -36,6 +36,6 @@ public class PokemonScript : MonoBehaviour
     {
         inBag = true;
         discardButton.gameObject.SetActive(true);
-        BagUI.instance.AddNewCard(pokemonData);
+        BagUI.instance.AddNewPokemon(pokemonData);
     }
 }

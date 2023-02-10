@@ -6,5 +6,5 @@ public class PokemonData
 {
     public string name;
     public string spriteUrl;
-    public Texture texture;
+    public Texture2D texture;
 }
