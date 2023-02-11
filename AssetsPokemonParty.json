@@ -1,0 +1,32 @@
+{
+    "Data": [
+        {
+            "name": "Muk",
+            "spriteUrl": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/89.png",
+            "texture": {
+                "instanceID": -7362
+            }
+        },
+        {
+            "name": "Muk",
+            "spriteUrl": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/89.png",
+            "texture": {
+                "instanceID": -7362
+            }
+        },
+        {
+            "name": "Sandslash",
+            "spriteUrl": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/28.png",
+            "texture": {
+                "instanceID": -7366
+            }
+        },
+        {
+            "name": "Sandslash",
+            "spriteUrl": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/28.png",
+            "texture": {
+                "instanceID": -7366
+            }
+        }
+    ]
+}

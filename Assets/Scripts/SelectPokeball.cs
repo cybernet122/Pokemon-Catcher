@@ -13,6 +13,7 @@ public class SelectPokeball : MonoBehaviour
 
     private void Update()
     {
-        transform.position = Input.mousePosition;
+        Vector2 newVec = new Vector2(Camera.main.ScreenToWorldPoint(Input.mousePosition).x, Camera.main.ScreenToWorldPoint(Input.mousePosition).y);
+        transform.position = newVec;
     }
 }

@@ -19,6 +19,14 @@ public class ApiRequest : MonoBehaviour
             Destroy(gameObject);
         pokeClient = new PokeApiClient();
     }
+    private void Update()
+    { 
+        /*if (Input.GetKeyDown(KeyCode.Space))
+        {
+            PokemonData pokemonData = new PokemonData();
+            GetNewPokemon(pokemonData);
+        }*/
+    }
 
     async public void GetNewPokemon(PokemonData pokemonData)
     {
@@ -30,21 +38,21 @@ public class ApiRequest : MonoBehaviour
 
         pokemonData.name = s;
         pokemonData.spriteUrl = pokemon.Sprites.FrontDefault;
-        /*GetSprite(pokeSprite).Then(texture => rawImage.texture);*/
-        StartCoroutine(NewPokemon(pokemonData));
+        //GetSprite(pokemonData.spriteUrl).Then(texture => pokemonData.texture);
+        
+        StartCoroutine(PokemonSprite(pokemonData));
     }
-
-    private IEnumerator NewPokemon(PokemonData pokemonData)
+    
+    private IEnumerator PokemonSprite(PokemonData pokemonData)
     {
         var spriteRequest = UnityWebRequestTexture.GetTexture(pokemonData.spriteUrl);
         yield return spriteRequest.SendWebRequest();
         var texture = DownloadHandlerTexture.GetContent(spriteRequest);
         texture.filterMode = FilterMode.Point;
-        pokemonData.texture = texture;
-        //BagUI.instance.AddPokemon(pokemonData); //save texture locally
+        pokemonData.texture = texture;        
     }
 
-    /*private IPromise<Texture2D> GetSprite(string pokeSprite)
+    private IPromise<Texture2D> GetSprite(string pokeSprite)
     {
         var promise = new Promise<Texture2D>();
         using (var request = new WebClient())
@@ -59,14 +67,15 @@ public class ApiRequest : MonoBehaviour
                 }
                 else
                 {
-                    Texture2D texture = new Texture2D(0,0);
-                    print(ev.Result.Length);
+                    var bytes = ev.Result;
+                    Texture2D texture = new Texture2D(96,96, TextureFormat.RGBA32, false);
                     texture.LoadRawTextureData(ev.Result);
+                    texture.Apply();
                     promise.Resolve(texture);
                 }
             };
-            request.DownloadDataAsync(new Uri(pokeSprite), "test");
+            request.DownloadDataAsync(new Uri(pokeSprite), null);
         }
         return promise;
-    }*/
+    }
 }

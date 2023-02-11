@@ -1,83 +1,122 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
-
+using DG.Tweening;
 public class BagUI : MonoBehaviour
 {
-    [SerializeField] GameObject pokemonPrefab, bagObject, smallBagObject, selector;
+    [SerializeField] GameObject pokemonPrefab, bagObject, smallBagObject, selector, loadingPanel;
     public List<GameObject> pokemonInBag = new List<GameObject>();
     public List<PokemonData> pokemonData = new List<PokemonData>();
-    [SerializeField] Transform placement, bagPlacement;
+    [SerializeField] Transform bagUIPlacement, smallBagPlacement, newPokemonPlacement;
     public static BagUI instance;
     GameObject newPokemon;
-
-
+    [SerializeField] Image loadingScreen;
+    [SerializeField] Slider loadingSlider;
+    List<Sequence> smallBagSequence = new List<Sequence>();
+    List<Sequence> bagUiSequence = new List<Sequence>();
     private void Start()
     {
+        StartCoroutine(LoadingScreen());
+        HideSmallBag();
         transform.GetChild(0).gameObject.SetActive(false);
         instance = this;
         if (FindObjectsOfType<BagUI>().Length > 1)
             Destroy(gameObject);
-        if (pokemonInBag.Count == 0)
-        {
-            HideSmallBag();
-        }
         selector.SetActive(true);
+        LoadParty();
+    }
+
+    private IEnumerator LoadingScreen()
+    {
+        loadingScreen.gameObject.SetActive(true);
+        float count = 0f;
+        float loadTime = 4f;
+        loadingSlider.maxValue = loadTime;
+        while (count < loadTime)
+        {
+            count += Time.deltaTime;
+            loadingSlider.value = count;
+            yield return null;
+        }
+        loadingPanel.SetActive(false);
+        float alpha = loadingScreen.color.a;
+        while (alpha > 0)
+        {
+            alpha -= Time.deltaTime;
+            loadingScreen.color = new Color(171,171,171,alpha);
+            yield return null;
+        }
+        loadingScreen.gameObject.SetActive(false);
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            PlayAnimations();
+        }
     }
 
     public void AddPokemon(PokemonData newPokemonData)
     {
-        HideSmallBag();
-
-        var pokeObject = Instantiate(pokemonPrefab,placement);
-        pokeObject.SetActive(false);
-        PokemonScript pokeScript = pokeObject.GetComponent<PokemonScript>();
-
-        pokeScript.pokemonData.name = newPokemonData.name;
-        pokeScript.pokemonData.spriteUrl = newPokemonData.spriteUrl;
-        pokeScript.pokemonData.texture = newPokemonData.texture;
-        pokemonData.Add(newPokemonData);
-
-        pokeScript.SetImageAndName(newPokemonData.texture, newPokemonData.name);
-        
+        GameObject pokeObject;
+        PokemonScript pokeScript;
+        CreatePokemon(newPokemonData, out pokeObject, out pokeScript);
         newPokemon = pokeObject;
-        if(pokemonInBag.Count < 3)
+        if (pokemonInBag.Count < 3)
         {
             pokemonInBag.Add(pokeObject);
-            pokemonData.Add(newPokemonData);
             pokeScript.inBag = true;
-            pokeObject.transform.SetParent(bagPlacement);
-            pokeObject.SetActive(true);
-            newPokemon = null;
+            pokemonData.Add(newPokemonData);
+            pokeObject.transform.SetParent(bagUIPlacement);
             EnableSmallBag();
+            SaveParty();
         }
         else
         {
-            pokeObject.SetActive(true);
+            pokeObject.transform.SetParent(newPokemonPlacement);
+            pokeObject.transform.localPosition = Vector2.zero;
             transform.GetChild(0).gameObject.SetActive(true);
             HideSmallBag();
         }
+    }
+
+    private void CreatePokemon(PokemonData newPokemonData, out GameObject pokeObject, out PokemonScript pokeScript)
+    {
+        pokeObject = Instantiate(pokemonPrefab, bagUIPlacement);
+        pokeScript = pokeObject.GetComponent<PokemonScript>();
+        pokeScript.pokemonData.texture = newPokemonData.texture;
+        pokeScript.SetImageAndName(newPokemonData.texture, newPokemonData.name);
+        pokeScript.pokemonData.name = newPokemonData.name;
+        pokeScript.pokemonData.spriteUrl = newPokemonData.spriteUrl;
     }
 
     public void AddNewPokemon(PokemonData newPokemonData)
     {
         pokemonInBag.Add(newPokemon);
         pokemonData.Add(newPokemonData);
-        newPokemon.transform.SetParent(bagPlacement);
+        newPokemon.transform.SetParent(bagUIPlacement);
         transform.GetChild(0).gameObject.SetActive(false);
         EnableSmallBag();
     }
 
     public void RemoveCard(GameObject pokeObject, PokemonData pokeData)
     {
-        if (pokemonData.Contains(pokeData))
-            pokemonData.Remove(pokeData);
+        for (int i = 0; i < pokemonData.Count; i++)
+        {
+            if (pokemonData[i].name == pokeData.name)
+                pokemonData.RemoveAt(i);
+        }
         if (pokemonInBag.Contains(pokeObject))
             pokemonInBag.Remove(pokeObject);
         Destroy(pokeObject);
-        newPokemon.GetComponent<PokemonScript>().AddCard();
+        newPokemon.GetComponent<PokemonScript>().AddPokemon();
+        SaveParty();
     }
 
     public void DiscardNewCard()
@@ -86,21 +125,48 @@ public class BagUI : MonoBehaviour
         newPokemon = null;
         transform.GetChild(0).gameObject.SetActive(false);
         EnableSmallBag();
+        SaveParty();
     }
 
     private void EnableSmallBag()
     {
         selector.SetActive(true);
+
         for (int i = 0; i < pokemonInBag.Count; i++)
         {
-            var pokemon = smallBagObject.transform.GetChild(i);
-            pokemon.gameObject.SetActive(false);
+            var smallBag = smallBagObject.transform.GetChild(i);
+            smallBag.gameObject.SetActive(false);
             var pokemonScript = pokemonInBag[i].GetComponent<PokemonScript>();
-            pokemon.GetComponentInChildren<TextMeshProUGUI>().text = pokemonScript.pokemonData.name;
-            pokemon.GetComponentInChildren<RawImage>().texture = pokemonScript.pokemonData.texture;
-            pokemon.gameObject.SetActive(true);
+            smallBag.GetComponentInChildren<TextMeshProUGUI>().text = pokemonScript.pokemonData.name;
+            smallBag.GetComponentInChildren<RawImage>().texture = pokemonScript.pokemonData.texture;
+            smallBag.gameObject.SetActive(true);
+            var pokeImage = smallBag.GetComponentInChildren<RawImage>().transform;
+            pokeImage.transform.localPosition = new Vector2(-20, -8);
+            var sequence = DOTween.Sequence();
+            sequence.Pause();
+            sequence.Append(pokeImage.DOLocalMove(new Vector2(20, -8), 0.3f).SetEase(Ease.Linear));
+            sequence.Append(pokeImage.DOLocalMove(new Vector2(0, 25), 0.3f).SetEase(Ease.Linear));
+            sequence.Append(pokeImage.DOLocalMove(new Vector2(-20, -8), 0.3f).SetEase(Ease.Linear));
+            sequence.Append(pokeImage.DOLocalMove(new Vector2(0, 25), 0.3f).SetEase(Ease.Linear));
+            sequence.Append(pokeImage.DOLocalMove(new Vector2(20, -8), 0.3f).SetEase(Ease.Linear));
+            sequence.SetLoops(100);
+            smallBagSequence.Add(sequence);
         }
         smallBagObject.transform.parent.gameObject.SetActive(true);
+    }
+
+    private void PlayAnimations()
+    {
+        if (smallBagSequence.Count > 0)
+            foreach (Sequence sequence in smallBagSequence)
+                sequence.Play();
+    }
+
+    private void PauseAnimations()
+    {
+        if(smallBagSequence.Count > 0)
+            foreach (Sequence sequence in smallBagSequence)
+                sequence.Pause();
     }
 
     private void HideSmallBag()
@@ -111,5 +177,37 @@ public class BagUI : MonoBehaviour
         {
             smallBagObject.transform.GetChild(i).gameObject.SetActive(false);
         }
+        PauseAnimations();
     }
+
+    public void SaveParty()
+    {
+        File.WriteAllText(Application.dataPath + "/" + "PokemonParty.json", "");
+        string json = JsonHelper.ToJson(pokemonData.ToArray(), true);
+        File.WriteAllText(Application.persistentDataPath + Path.AltDirectorySeparatorChar + "PokemonParty.json", json);
+        //File.WriteAllText(Application.dataPath + "/" + "PokemonParty.json", json);
+    }
+
+    private void LoadParty()
+    {
+        if (File.Exists(Application.persistentDataPath + Path.AltDirectorySeparatorChar + "PokemonParty.json"))
+        {
+            string json = File.ReadAllText(Application.persistentDataPath + Path.AltDirectorySeparatorChar + "PokemonParty.json");
+            List<PokemonData> pokemonDatas = JsonHelper.FromJson<PokemonData>(json).ToList();
+            StartCoroutine(CreatePokemonParty(pokemonDatas));
+        }
+    }
+
+    private IEnumerator CreatePokemonParty(List<PokemonData> pokemonDatas)
+    {
+        foreach (PokemonData pokemonData in pokemonDatas)
+        {
+            var spriteRequest = UnityWebRequestTexture.GetTexture(pokemonData.spriteUrl);
+            yield return spriteRequest.SendWebRequest();
+            var texture = DownloadHandlerTexture.GetContent(spriteRequest);
+            texture.filterMode = FilterMode.Point;
+            pokemonData.texture = texture;
+            AddPokemon(pokemonData);
+        }
+    }    
 }

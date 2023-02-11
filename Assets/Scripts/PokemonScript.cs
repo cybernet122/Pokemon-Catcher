@@ -25,14 +25,14 @@ public class PokemonScript : MonoBehaviour
         rawImage.texture = pokeSprite;
         pokeName.text = name; 
     }
-
+    public void SetImage(Texture2D texture) => rawImage.texture = texture;
     public void DiscardCard()
     {
         if (inBag)
             BagUI.instance.RemoveCard(gameObject, pokemonData);
     }
 
-    public void AddCard()
+    public void AddPokemon()
     {
         inBag = true;
         discardButton.gameObject.SetActive(true);
