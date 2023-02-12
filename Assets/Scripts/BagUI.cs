@@ -17,8 +17,7 @@ public class BagUI : MonoBehaviour
     GameObject newPokemon;
     [SerializeField] Image loadingScreen;
     [SerializeField] Slider loadingSlider;
-    List<Sequence> smallBagSequence = new List<Sequence>();
-    List<Sequence> bagUiSequence = new List<Sequence>();
+
     private void Start()
     {
         StartCoroutine(LoadingScreen());
@@ -29,6 +28,7 @@ public class BagUI : MonoBehaviour
             Destroy(gameObject);
         selector.SetActive(true);
         LoadParty();
+        
     }
 
     private IEnumerator LoadingScreen()
@@ -52,14 +52,6 @@ public class BagUI : MonoBehaviour
             yield return null;
         }
         loadingScreen.gameObject.SetActive(false);
-    }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            PlayAnimations();
-        }
     }
 
     public void AddPokemon(PokemonData newPokemonData)
@@ -121,6 +113,7 @@ public class BagUI : MonoBehaviour
 
     public void DiscardNewCard()
     {
+        newPokemon.GetComponentInChildren<DoTweenAnimation>().StopAnimation();
         Destroy(newPokemon);
         newPokemon = null;
         transform.GetChild(0).gameObject.SetActive(false);
@@ -140,33 +133,9 @@ public class BagUI : MonoBehaviour
             smallBag.GetComponentInChildren<TextMeshProUGUI>().text = pokemonScript.pokemonData.name;
             smallBag.GetComponentInChildren<RawImage>().texture = pokemonScript.pokemonData.texture;
             smallBag.gameObject.SetActive(true);
-            var pokeImage = smallBag.GetComponentInChildren<RawImage>().transform;
-            pokeImage.transform.localPosition = new Vector2(-20, -8);
-            var sequence = DOTween.Sequence();
-            sequence.Pause();
-            sequence.Append(pokeImage.DOLocalMove(new Vector2(20, -8), 0.3f).SetEase(Ease.Linear));
-            sequence.Append(pokeImage.DOLocalMove(new Vector2(0, 25), 0.3f).SetEase(Ease.Linear));
-            sequence.Append(pokeImage.DOLocalMove(new Vector2(-20, -8), 0.3f).SetEase(Ease.Linear));
-            sequence.Append(pokeImage.DOLocalMove(new Vector2(0, 25), 0.3f).SetEase(Ease.Linear));
-            sequence.Append(pokeImage.DOLocalMove(new Vector2(20, -8), 0.3f).SetEase(Ease.Linear));
-            sequence.SetLoops(100);
-            smallBagSequence.Add(sequence);
+            
         }
         smallBagObject.transform.parent.gameObject.SetActive(true);
-    }
-
-    private void PlayAnimations()
-    {
-        if (smallBagSequence.Count > 0)
-            foreach (Sequence sequence in smallBagSequence)
-                sequence.Play();
-    }
-
-    private void PauseAnimations()
-    {
-        if(smallBagSequence.Count > 0)
-            foreach (Sequence sequence in smallBagSequence)
-                sequence.Pause();
     }
 
     private void HideSmallBag()
@@ -177,15 +146,12 @@ public class BagUI : MonoBehaviour
         {
             smallBagObject.transform.GetChild(i).gameObject.SetActive(false);
         }
-        PauseAnimations();
     }
 
     public void SaveParty()
     {
-        File.WriteAllText(Application.dataPath + "/" + "PokemonParty.json", "");
         string json = JsonHelper.ToJson(pokemonData.ToArray(), true);
         File.WriteAllText(Application.persistentDataPath + Path.AltDirectorySeparatorChar + "PokemonParty.json", json);
-        //File.WriteAllText(Application.dataPath + "/" + "PokemonParty.json", json);
     }
 
     private void LoadParty()
@@ -209,5 +175,7 @@ public class BagUI : MonoBehaviour
             pokemonData.texture = texture;
             AddPokemon(pokemonData);
         }
-    }    
+    }  
+    
+    public void ExitGame() =>  Application.Quit();
 }

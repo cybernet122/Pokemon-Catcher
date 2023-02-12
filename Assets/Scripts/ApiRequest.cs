@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using PokeApiNet;
 using RSG;
@@ -10,7 +9,6 @@ public class ApiRequest : MonoBehaviour
 {
     public static ApiRequest instance;
     PokeApiClient pokeClient;
-    //[SerializeField] RawImage rawImage;
 
     private void Start()
     {
@@ -18,14 +16,6 @@ public class ApiRequest : MonoBehaviour
         if (FindObjectsOfType<ApiRequest>().Length > 1)
             Destroy(gameObject);
         pokeClient = new PokeApiClient();
-    }
-    private void Update()
-    { 
-        /*if (Input.GetKeyDown(KeyCode.Space))
-        {
-            PokemonData pokemonData = new PokemonData();
-            GetNewPokemon(pokemonData);
-        }*/
     }
 
     async public void GetNewPokemon(PokemonData pokemonData)
@@ -38,8 +28,8 @@ public class ApiRequest : MonoBehaviour
 
         pokemonData.name = s;
         pokemonData.spriteUrl = pokemon.Sprites.FrontDefault;
-        //GetSprite(pokemonData.spriteUrl).Then(texture => pokemonData.texture);
         
+        //GetSprite(pokemonData.spriteUrl).Then(texture => pokemonData.texture); //Produces error
         StartCoroutine(PokemonSprite(pokemonData));
     }
     
@@ -52,7 +42,7 @@ public class ApiRequest : MonoBehaviour
         pokemonData.texture = texture;        
     }
 
-    private IPromise<Texture2D> GetSprite(string pokeSprite)
+    /*private IPromise<Texture2D> GetSprite(string pokeSprite) //Produces error
     {
         var promise = new Promise<Texture2D>();
         using (var request = new WebClient())
@@ -68,7 +58,7 @@ public class ApiRequest : MonoBehaviour
                 else
                 {
                     var bytes = ev.Result;
-                    Texture2D texture = new Texture2D(96,96, TextureFormat.RGBA32, false);
+                    Texture2D texture = new Texture2D(96, 96, TextureFormat.RGBA32, false); //Downloads data but shows error when creating texture
                     texture.LoadRawTextureData(ev.Result);
                     texture.Apply();
                     promise.Resolve(texture);
@@ -77,5 +67,5 @@ public class ApiRequest : MonoBehaviour
             request.DownloadDataAsync(new Uri(pokeSprite), null);
         }
         return promise;
-    }
+    }*/
 }
